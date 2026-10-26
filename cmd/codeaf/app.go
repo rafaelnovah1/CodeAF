@@ -434,6 +434,9 @@ func appConnOf(client *remote.Client, release func(), assembled bool) *appConn {
 
 // appBackend is the [appwire.Engine] over this process's conversations.
 type appBackend struct {
+	// devices observes existing sync traffic without starting a roster watch.
+	devices *appDevices
+
 	// organizeProposer supplies a naming door when the backend is embedded without held conversations.
 	organizeProposer session.TeamProposer
 
@@ -825,6 +828,7 @@ func newAppBackend(emit appwire.Emitter, open appOpener) *appBackend {
 		mint:      appMint,
 	}
 	b.emit = b.newAppInbox(emit)
+	b.devices = b.listenDevices()
 	b.stopPhases = b.listenPhases()
 	b.stopProgress = b.listenProgress()
 	guard.Go("app/sweep", b.sweep)
@@ -3877,6 +3881,9 @@ func (b *appBackend) Close() error {
 	})
 	if already {
 		return nil
+	}
+	if b.devices != nil {
+		b.devices.close()
 	}
 	// THIS MACHINE'S FACTORY IS LET GO BEFORE ANYTHING THAT WAITS ON A
 	// CONVERSATION. Stopping the close watch waits for a carry-on that may be
