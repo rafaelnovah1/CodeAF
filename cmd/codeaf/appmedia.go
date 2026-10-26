@@ -31,7 +31,7 @@ func (b *appBackend) mediaScope(agent string) (sessionID string, roots []string,
 	}
 	var workspace string
 	b.locked(func() { workspace = a.view.Workspace })
-	dir := filepath.Dir(a.transcript)
+	dir := session.DirOf(a.transcript)
 	place := session.Place{Dir: dir, Owned: true}
 	roots = []string{workspace, place.Work(), place.Artifacts()}
 	return filepath.Base(dir), roots, nil
